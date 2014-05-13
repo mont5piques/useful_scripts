@@ -3,20 +3,35 @@ from configobj import ConfigObj
 import argparse
 import sys
 
-
 # Setting argparse
 parser = argparse.ArgumentParser()
 
 parser.add_argument('first_file', type=str, help='First file')
 parser.add_argument('second_file', type=str, help='second file')
-parser.add_argument('result_file', type=str, help='result file')
+parser.add_argument('result_file', type=str, nargs='?', help='result file')
+
+class stringOut:
+    s = ''
+    def __init__(self, path="", mode=""):
+        pass
+    def read(self):
+        return self.s
+    def write(self, p):
+        self.s += p
+    def __str__(self):
+        return self.s
+        
 
 # Parsing args
 args = parser.parse_args()
 
-source = dict(ConfigObj(args.first_file))
-dest = dict(ConfigObj(args.second_file))
-result = ConfigObj(args.result_file)
+source = dict(ConfigObj(args.first_file, interpolation=False))
+dest = dict(ConfigObj(args.second_file, interpolation=False))
+
+if args.result_file:
+    result = ConfigObj(args.result_file)
+else:
+    result = ConfigObj()
 
 def dict_diff_deep(dict1, dict2, result):
     diffkeys_1 = [k for k in dict2 if ((k in dict1 and dict1[k] != dict2[k]) or (k not in dict1)) and not isinstance(dict2[k], dict)]
@@ -36,5 +51,10 @@ def dict_diff_deep(dict1, dict2, result):
 #from pprint import pprint
 dict_diff_deep(source, dest, result)
 
-# Writing result
-result.write()
+if args.result_file:
+    # Writing result
+    result.write()
+else:
+    f = stringOut()
+    result.write(f)
+    print(str(f))
