@@ -2,6 +2,7 @@
 from configobj import ConfigObj
 import argparse
 import sys
+import re
 
 # Setting argparse
 parser = argparse.ArgumentParser()
@@ -10,7 +11,7 @@ parser.add_argument('first_file', type=str, help='First file')
 parser.add_argument('second_file', type=str, help='second file')
 parser.add_argument('result_file', type=str, nargs='?', help='result file')
 
-class stringOut:
+class stringBuf:
     s = ''
     def __init__(self, path="", mode=""):
         pass
@@ -25,8 +26,26 @@ class stringOut:
 # Parsing args
 args = parser.parse_args()
 
-source = dict(ConfigObj(args.first_file, interpolation=False))
-dest = dict(ConfigObj(args.second_file, interpolation=False))
+try:
+    source_buf = stringBuf()
+    source_buf.s = open(args.first_file, 'r').readlines()
+    source_buf.s = '\n'.join([re.sub('^;', '#', x) for x in source_buf.s])
+    
+    source = dict(ConfigObj(infile=source_buf, interpolation=False))
+except Exception, e:
+    print source_buf.s
+    print 'Error while reading ' + args.first_file
+    print str(e)
+
+try:
+    source_buf = stringBuf()
+    source_buf.s = open(args.second_file, 'r').readlines()
+    source_buf.s = '\n'.join([re.sub('^;', '#', x) for x in source_buf.s])
+
+    dest = dict(ConfigObj(infile=source_buf, interpolation=False))
+except Exception, e:
+    print 'Error while reading ' + args.second_file
+    print str(e)
 
 if args.result_file:
     result = ConfigObj(args.result_file)
@@ -55,6 +74,6 @@ if args.result_file:
     # Writing result
     result.write()
 else:
-    f = stringOut()
+    f = stringBuf()
     result.write(f)
     print(str(f))
