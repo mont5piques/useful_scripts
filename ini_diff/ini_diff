@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('first_file', type=str, help='First file')
 parser.add_argument('second_file', type=str, help='second file')
 parser.add_argument('result_file', type=str, nargs='?', help='result file')
+parser.add_argument("-a", "--avoidempty", help="Don't write output file if no diff data", action="store_true")
 
 class stringBuf:
     s = ''
@@ -72,7 +73,8 @@ dict_diff_deep(source, dest, result)
 
 if args.result_file:
     # Writing result
-    result.write()
+    if not args.avoidempty or dict(result):
+        result.write()
 else:
     f = stringBuf()
     result.write(f)
